@@ -100,23 +100,6 @@ class SignUp extends Component {
     this.setState(newState, this.validateForm);
   };
 
-  // register = (name, email, password) => {
-  //   return new Promise(resolve => {
-  //     setTimeout(() => {
-  //       resolve(
-  //         firebase.auth().createUserWithEmailAndPassword(email, password)
-  //           .then(res => {
-  //             this.setState({ user: res })
-  //             return res;
-  //           }).catch((err) => {
-  //             console.log(err)
-  //             return err;
-  //           })
-  //       );
-  //     }, 1500);
-  //   })
-  // }
-
   register = (name, email, password) => {
     return new Promise(resolve => {
       setTimeout(() => {
@@ -141,6 +124,8 @@ class SignUp extends Component {
 
       const res = await this.register(values.firstName + " " + values.lastName,
         values.email, values.password)
+
+        console.log(res)
 
       if (res.code === "auth/email-already-in-use") {
         this.setState({ emailExists: true })

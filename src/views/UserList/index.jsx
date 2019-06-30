@@ -21,6 +21,9 @@ import { UsersToolbar, UsersTable } from './components';
 // Component styles
 import styles from './style';
 
+//Firebase
+import firebase from '../../Firebase'
+
 class UserList extends Component {
   signal = true;
 

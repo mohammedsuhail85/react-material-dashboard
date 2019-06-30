@@ -57,6 +57,8 @@ class SignIn extends Component {
     user: {},
     passwordError: false,
     emailError: false,
+    passwordErrorMessage: '',
+    emailErrorMessage: ''
   };
 
   signIn = (email, password) => {
@@ -66,7 +68,6 @@ class SignIn extends Component {
           firebase.auth().signInWithEmailAndPassword(email, password).then(res => {
             this.setState({ isSignedIn: !!res })
             this.setState({ user: res })
-            console.log(this.state.user)
             return res;
           }).catch((err) => {
             return err;
@@ -117,8 +118,6 @@ class SignIn extends Component {
       const { history } = this.props;
       const { values } = this.state;
 
-      console.log(this.name)
-
       if (!this.state.touched.email && !this.state.touched.password) {
         const googleProvider = new firebase.auth.GoogleAuthProvider();
         app.auth().signInWithPopup(googleProvider).then(res => {
@@ -130,20 +129,27 @@ class SignIn extends Component {
           }
         });
       }
-      
+
       this.setState({ isLoading: true });
 
       if (this.state.touched.email && this.state.touched.password) {
         const res = await this.signIn(values.email, values.password);
-        console.log(res);
-        if(res.code === "auth/user-not-found") {
+
+        console.log(res)
+
+        if (res.code === "auth/user-not-found") {
           this.setState({ emailError: true })
+          this.setState({ emailErrorMessage: 'Invalid Email' })
           this.setState({ isLoading: false })
         } else if (res.code === "auth/wrong-password") {
-          this.setState({ emailError: false})
-          this.setState({ passwordError: true})
+          this.setState({ emailErrorMessage: '' })
+          this.setState({ passwordErrorMessage: 'Invalid Password' })
+          this.setState({ emailError: false })
+          this.setState({ passwordError: true })
           this.setState({ isLoading: false })
-        } else if(res.code === "auth/too-many-requests") {
+        } else if (res.code === "auth/too-many-requests") {
+          this.setState({ emailErrorMessage: '' })
+          this.setState({ passwordErrorMessage: 'Invalid Password' })
           this.setState({ emailError: false })
           this.setState({ passwordError: true })
           this.setState({ isLoading: false })
@@ -279,6 +285,12 @@ class SignIn extends Component {
                         {errors.email[0]}
                       </Typography>
                     )}
+                    <Typography
+                      className={classes.fieldError}
+                      variant="body2"
+                    >
+                      {this.state.emailErrorMessage}
+                    </Typography>
                     <TextField
                       className={classes.textField}
                       label="Password"
@@ -299,6 +311,12 @@ class SignIn extends Component {
                         {errors.password[0]}
                       </Typography>
                     )}
+                    <Typography
+                      className={classes.fieldError}
+                      variant="body2"
+                    >
+                      {this.state.passwordErrorMessage}
+                    </Typography>
                   </div>
                   {submitError && (
                     <Typography
