@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import compose from 'recompose/compose';
 import validate from 'validate.js';
 import _ from 'underscore';
+import firebase from '../../Firebase'
 
 // Material helpers
 import { withStyles } from '@material-ui/core';
@@ -33,16 +34,10 @@ import styles from './styles';
 // Form validation schema
 import schema from './schema';
 
-validate.validators.checked = validators.checked;
+//Firebase Config
+// const app = firebase.app();
 
-// Service methods
-const signUp = () => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(true);
-    }, 1500);
-  });
-};
+validate.validators.checked = validators.checked;
 
 class SignUp extends Component {
   state = {
@@ -69,7 +64,12 @@ class SignUp extends Component {
     },
     isValid: false,
     isLoading: false,
-    submitError: null
+    submitError: null,
+    user: {},
+    emailExists: false,
+    isPasswordWeak: false,
+    emailError: '',
+    passwordError: '',
   };
 
   handleBack = () => {
@@ -100,6 +100,38 @@ class SignUp extends Component {
     this.setState(newState, this.validateForm);
   };
 
+  // register = (name, email, password) => {
+  //   return new Promise(resolve => {
+  //     setTimeout(() => {
+  //       resolve(
+  //         firebase.auth().createUserWithEmailAndPassword(email, password)
+  //           .then(res => {
+  //             this.setState({ user: res })
+  //             return res;
+  //           }).catch((err) => {
+  //             console.log(err)
+  //             return err;
+  //           })
+  //       );
+  //     }, 1500);
+  //   })
+  // }
+
+  register = (name, email, password) => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(
+          firebase.auth().createUserWithEmailAndPassword(email, password).then(res => {
+            this.setState({ user: res })
+            return res;
+          }).catch((err) => {
+            return err;
+          })
+        );
+      }, 1500);
+    });
+  };
+
   handleSignUp = async () => {
     try {
       const { history } = this.props;
@@ -107,14 +139,20 @@ class SignUp extends Component {
 
       this.setState({ isLoading: true });
 
-      await signUp({
-        firstName: values.firstName,
-        lastName: values.lastName,
-        email: values.email,
-        password: values.password
-      });
+      const res = await this.register(values.firstName + " " + values.lastName,
+        values.email, values.password)
 
-      history.push('/sign-in');
+      if (res.code === "auth/email-already-in-use") {
+        this.setState({ emailExists: true })
+        this.setState({ emailError: 'Email Already Exist' })
+      } else if (res.code === "auth/weak-password") {
+        this.setState({ emailExists: false })
+        this.setState({ emailError: '' })
+        this.setState({ passwordError: 'Weak Password minimum 6 characters' })
+        this.setState({ isPasswordWeak: true })
+      } else {
+        history.push('/sign-in');
+      };
     } catch (error) {
       this.setState({
         isLoading: false,
@@ -256,6 +294,7 @@ class SignUp extends Component {
                       }
                       value={values.email}
                       variant="outlined"
+                      error={this.state.emailExists}
                     />
                     {showEmailError && (
                       <Typography
@@ -265,6 +304,12 @@ class SignUp extends Component {
                         {errors.email[0]}
                       </Typography>
                     )}
+                    {<Typography
+                      className={classes.fieldError}
+                      variant="body2"
+                    >
+                      {this.state.emailError}
+                    </Typography>}
                     <TextField
                       className={classes.textField}
                       label="Password"
@@ -274,6 +319,7 @@ class SignUp extends Component {
                       type="password"
                       value={values.password}
                       variant="outlined"
+                      error={this.state.passwordError}
                     />
                     {showPasswordError && (
                       <Typography
@@ -281,8 +327,15 @@ class SignUp extends Component {
                         variant="body2"
                       >
                         {errors.password[0]}
+                        {this.state.passwordError}
                       </Typography>
                     )}
+                    {<Typography
+                      className={classes.fieldError}
+                      variant="body2"
+                    >
+                      {this.state.passwordError}
+                    </Typography>}
                     <div className={classes.policy}>
                       <Checkbox
                         checked={values.policy}
@@ -327,17 +380,17 @@ class SignUp extends Component {
                   {isLoading ? (
                     <CircularProgress className={classes.progress} />
                   ) : (
-                    <Button
-                      className={classes.signUpButton}
-                      color="primary"
-                      disabled={!isValid}
-                      onClick={this.handleSignUp}
-                      size="large"
-                      variant="contained"
-                    >
-                      Sign up now
+                      <Button
+                        className={classes.signUpButton}
+                        color="primary"
+                        disabled={!isValid}
+                        onClick={this.handleSignUp}
+                        size="large"
+                        variant="contained"
+                      >
+                        Sign up now
                     </Button>
-                  )}
+                    )}
                   <Typography
                     className={classes.signIn}
                     variant="body1"

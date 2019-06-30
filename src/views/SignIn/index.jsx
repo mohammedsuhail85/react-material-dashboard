@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import compose from 'recompose/compose';
 import validate from 'validate.js';
 import _ from 'underscore';
-import * as firebase from 'firebase';
+import firebase from '../../Firebase';
 
 // Material helpers
 import { withStyles } from '@material-ui/core';
@@ -34,16 +34,6 @@ import styles from './styles';
 import schema from './schema';
 
 //Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyA_l9bJNsDjZUqcid_Mq1oq5Dis0YtTDf8",
-  authDomain: "react-test-9ddda.firebaseapp.com",
-  databaseURL: "https://react-test-9ddda.firebaseio.com",
-  projectId: "react-test-9ddda",
-  storageBucket: "",
-  messagingSenderId: "1059924843353",
-  appId: "1:1059924843353:web:3f98d1a613cf3598"
-};
-firebase.initializeApp(firebaseConfig);
 const app = firebase.app();
 
 class SignIn extends Component {
@@ -64,7 +54,9 @@ class SignIn extends Component {
     isLoading: false,
     submitError: null,
     isSignedIn: false,
-    user: {}
+    user: {},
+    passwordError: false,
+    emailError: false,
   };
 
   signIn = (email, password) => {
@@ -77,7 +69,7 @@ class SignIn extends Component {
             console.log(this.state.user)
             return res;
           }).catch((err) => {
-            console.log(err)
+            return err;
           })
         );
       }, 1500);
@@ -125,24 +117,42 @@ class SignIn extends Component {
       const { history } = this.props;
       const { values } = this.state;
 
-      if (!this.state.touched.email && !this.state.touched.password) {
+      console.log(this.name)
 
+      if (!this.state.touched.email && !this.state.touched.password) {
         const googleProvider = new firebase.auth.GoogleAuthProvider();
         app.auth().signInWithPopup(googleProvider).then(res => {
           this.setState({ isSignedIn: !!res })
           this.setState({ user: res })
-          console.log(this.state.user)
           localStorage.setItem('isAuthenticated', this.state.isSignedIn);
-          history.push('/dashboard');
+          if (this.state.isSignedIn) {
+            history.push('/dashboard');
+          }
         });
       }
-
+      
       this.setState({ isLoading: true });
-      const res = await this.signIn(values.email, values.password);
-      if (res.code === "auth/wrong-password") {
-      } else {
-        localStorage.setItem('isAuthenticated', this.state.isSignedIn);
-        history.push('/dashboard');
+
+      if (this.state.touched.email && this.state.touched.password) {
+        const res = await this.signIn(values.email, values.password);
+        console.log(res);
+        if(res.code === "auth/user-not-found") {
+          this.setState({ emailError: true })
+          this.setState({ isLoading: false })
+        } else if (res.code === "auth/wrong-password") {
+          this.setState({ emailError: false})
+          this.setState({ passwordError: true})
+          this.setState({ isLoading: false })
+        } else if(res.code === "auth/too-many-requests") {
+          this.setState({ emailError: false })
+          this.setState({ passwordError: true })
+          this.setState({ isLoading: false })
+        } else {
+          localStorage.setItem('isAuthenticated', this.state.isSignedIn);
+          if (this.state.isSignedIn) {
+            history.push('/dashboard');
+          }
+        }
       }
 
     } catch (error) {
@@ -232,11 +242,6 @@ class SignIn extends Component {
                   >
                     Sign in with social media
                   </Typography>
-
-                  {/* <StyledFirebaseAuth
-                    uiConfig={this.uiConfig}
-                    firebaseAuth={firebase.auth()}
-                  /> */}
                   <Button
                     className={classes.googleButton}
                     name="googleLogin"
@@ -264,6 +269,7 @@ class SignIn extends Component {
                       type="text"
                       value={values.email}
                       variant="outlined"
+                      error={this.state.emailError}
                     />
                     {showEmailError && (
                       <Typography
@@ -283,6 +289,7 @@ class SignIn extends Component {
                       type="password"
                       value={values.password}
                       variant="outlined"
+                      error={this.state.passwordError}
                     />
                     {showPasswordError && (
                       <Typography
@@ -328,9 +335,6 @@ class SignIn extends Component {
                     </Link>
                   </Typography>
                 </form>
-                <button onClick={this.signOut}>
-                  Sign out
-                </button>
               </div>
             </div>
           </Grid>
