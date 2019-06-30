@@ -5,7 +5,6 @@ import { Switch, Route, Redirect } from 'react-router-dom';
 import Dashboard from './views/Dashboard';
 import ProductList from './views/ProductList';
 import UserList from './views/UserList';
-import Typography from './views/Typography';
 import Icons from './views/Icons';
 import Account from './views/Account';
 import Settings from './views/Settings';
@@ -21,7 +20,7 @@ export default class Routes extends Component {
         <Redirect
           exact
           from="/"
-          to="/dashboard"
+          to="/sign-in"
         />
         <Route
           component={Dashboard}
@@ -37,11 +36,6 @@ export default class Routes extends Component {
           component={ProductList}
           exact
           path="/products"
-        />
-        <Route
-          component={Typography}
-          exact
-          path="/typography"
         />
         <Route
           component={Icons}

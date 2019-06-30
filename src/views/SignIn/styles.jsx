@@ -17,7 +17,7 @@ export default theme => ({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundImage: 'url(/images/sign_up_1.jpg)',
+    backgroundImage: 'url(/images/foods.jpg)',
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center'
@@ -27,15 +27,25 @@ export default theme => ({
     flexBasis: '600px'
   },
   quoteText: {
-    color: theme.palette.common.white,
-    fontWeight: 300
+    // color: theme.palette.common.white,
+    fontWeight: 'bold',
+    color: '#fff',
+    hShadow: 10,
+    vShadow: 10,
+    textShadow: '1px 1px 2px black, 0 0 1em gray, 0 0 0.2em gray',
+    fontFamily: '"Bickley Script", sans-serif'
   },
   name: {
     marginTop: theme.spacing.unit * 3,
-    color: theme.palette.common.white
+    color: theme.palette.common.white,
+    fontSize: '20px',
+    fontWeight: 'bold',
+    textShadow: '1px 1px 2px black, 0 0 1em gray, 0 0 0.2em gray',
+    
   },
   bio: {
-    color: theme.palette.common.white
+    color: theme.palette.common.white,
+    textShadow: '1px 1px 2px black, 0 0 1em gray, 0 0 0.2em gray',
   },
   contentWrapper: {},
   content: {

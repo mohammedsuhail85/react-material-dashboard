@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import compose from 'recompose/compose';
 import validate from 'validate.js';
 import _ from 'underscore';
+import * as firebase from 'firebase';
 
 // Material helpers
 import { withStyles } from '@material-ui/core';
@@ -24,7 +25,7 @@ import {
 import { ArrowBack as ArrowBackIcon } from '@material-ui/icons';
 
 // Shared components
-import { Facebook as FacebookIcon, Google as GoogleIcon } from 'icons';
+import { Google as GoogleIcon } from 'icons';
 
 // Component styles
 import styles from './styles';
@@ -32,14 +33,18 @@ import styles from './styles';
 // Form validation schema
 import schema from './schema';
 
-// Service methods
-const signIn = () => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(true);
-    }, 1500);
-  });
+//Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyA_l9bJNsDjZUqcid_Mq1oq5Dis0YtTDf8",
+  authDomain: "react-test-9ddda.firebaseapp.com",
+  databaseURL: "https://react-test-9ddda.firebaseio.com",
+  projectId: "react-test-9ddda",
+  storageBucket: "",
+  messagingSenderId: "1059924843353",
+  appId: "1:1059924843353:web:3f98d1a613cf3598"
 };
+firebase.initializeApp(firebaseConfig);
+const app = firebase.app();
 
 class SignIn extends Component {
   state = {
@@ -57,8 +62,35 @@ class SignIn extends Component {
     },
     isValid: false,
     isLoading: false,
-    submitError: null
+    submitError: null,
+    isSignedIn: false,
+    user: {}
   };
+
+  signIn = (email, password) => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(
+          firebase.auth().signInWithEmailAndPassword(email, password).then(res => {
+            this.setState({ isSignedIn: !!res })
+            this.setState({ user: res })
+            console.log(this.state.user)
+            return res;
+          }).catch((err) => {
+            console.log(err)
+          })
+        );
+      }, 1500);
+    });
+  };
+
+  signOut = () => {
+    firebase.auth().signOut().then(() => {
+      console.log('sign out')
+    }).catch((err) => {
+      console.log('error' + err)
+    })
+  }
 
   handleBack = () => {
     const { history } = this.props;
@@ -88,18 +120,31 @@ class SignIn extends Component {
     this.setState(newState, this.validateForm);
   };
 
-  handleSignIn = async () => {
+  handleSignIn = async (e) => {
     try {
       const { history } = this.props;
       const { values } = this.state;
 
+      if (!this.state.touched.email && !this.state.touched.password) {
+
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        app.auth().signInWithPopup(googleProvider).then(res => {
+          this.setState({ isSignedIn: !!res })
+          this.setState({ user: res })
+          console.log(this.state.user)
+          localStorage.setItem('isAuthenticated', this.state.isSignedIn);
+          history.push('/dashboard');
+        });
+      }
+
       this.setState({ isLoading: true });
+      const res = await this.signIn(values.email, values.password);
+      if (res.code === "auth/wrong-password") {
+      } else {
+        localStorage.setItem('isAuthenticated', this.state.isSignedIn);
+        history.push('/dashboard');
+      }
 
-      await signIn(values.email, values.password);
-
-      localStorage.setItem('isAuthenticated', true);
-
-      history.push('/dashboard');
     } catch (error) {
       this.setState({
         isLoading: false,
@@ -139,8 +184,7 @@ class SignIn extends Component {
                   className={classes.quoteText}
                   variant="h1"
                 >
-                  Hella narwhal Cosby sweater McSweeney's, salvia kitsch before
-                  they sold out High Life.
+                  Online Food Delivery Service
                 </Typography>
                 <div className={classes.person}>
                   <Typography
@@ -188,18 +232,14 @@ class SignIn extends Component {
                   >
                     Sign in with social media
                   </Typography>
-                  <Button
-                    className={classes.facebookButton}
-                    color="primary"
-                    onClick={this.handleSignIn}
-                    size="large"
-                    variant="contained"
-                  >
-                    <FacebookIcon className={classes.facebookIcon} />
-                    Login with Facebook
-                  </Button>
+
+                  {/* <StyledFirebaseAuth
+                    uiConfig={this.uiConfig}
+                    firebaseAuth={firebase.auth()}
+                  /> */}
                   <Button
                     className={classes.googleButton}
+                    name="googleLogin"
                     onClick={this.handleSignIn}
                     size="large"
                     variant="contained"
@@ -264,17 +304,17 @@ class SignIn extends Component {
                   {isLoading ? (
                     <CircularProgress className={classes.progress} />
                   ) : (
-                    <Button
-                      className={classes.signInButton}
-                      color="primary"
-                      disabled={!isValid}
-                      onClick={this.handleSignIn}
-                      size="large"
-                      variant="contained"
-                    >
-                      Sign in now
+                      <Button
+                        className={classes.signInButton}
+                        color="primary"
+                        disabled={!isValid}
+                        onClick={this.handleSignIn}
+                        size="large"
+                        variant="contained"
+                      >
+                        Sign in now
                     </Button>
-                  )}
+                    )}
                   <Typography
                     className={classes.signUp}
                     variant="body1"
@@ -288,6 +328,9 @@ class SignIn extends Component {
                     </Link>
                   </Typography>
                 </form>
+                <button onClick={this.signOut}>
+                  Sign out
+                </button>
               </div>
             </div>
           </Grid>
